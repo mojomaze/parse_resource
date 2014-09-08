@@ -197,7 +197,7 @@ module ParseResource
     # Gets the current class's model name for the URI
     # EDIT: Allowing for explicit Parse Class Name
     def self.model_name_uri
-      klass_name = self.parse_klass_name ? self.parse_klass_name : self.class.model_name.to_s
+      klass_name = self.parse_klass_name ? self.parse_klass_name : self.model_name.to_s
       if klass_name == "User"
         "users"
       elsif klass_name == "Installation"
