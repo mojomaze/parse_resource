@@ -34,6 +34,8 @@ module ParseResource
     HashWithIndifferentAccess = ActiveSupport::HashWithIndifferentAccess
 
     attr_accessor :error_instances
+    #EDIT: Allowing for explicit Parse Class Name
+    cattr_accessor :parse_klass_name
 
     define_model_callbacks :save, :create, :update, :destroy
 
@@ -56,6 +58,14 @@ module ParseResource
       self.attributes.merge!(attributes)
       self.attributes unless self.attributes.empty?
       create_setters_and_getters!
+      
+      #EDIT: Allowing for explicit Parse Class Name
+      self.parse_klass_name = nil
+    end
+    
+    # Allow different Parse Class Name for Model namespacing issues
+    def self.parse_klass(klass)
+      self.parse_klass_name = klass
     end
 
     # Explicitly adds a field to the model.
@@ -102,9 +112,10 @@ module ParseResource
       field(parent)
       @@has_many_relations << parent
     end
-
+    
+    #EDIT: Allowing for explicit Parse Class Name
     def to_pointer
-      klass_name = self.class.model_name.to_s
+      klass_name = self.parse_klass_name ? self.parse_klass_name : self.class.model_name.to_s
       klass_name = "_User" if klass_name == "User"
       klass_name = "_Installation" if klass_name == "Installation"
       klass_name = "_Role" if klass_name == "Role"
@@ -184,15 +195,17 @@ module ParseResource
     end
 
     # Gets the current class's model name for the URI
+    # EDIT: Allowing for explicit Parse Class Name
     def self.model_name_uri
-      if self.model_name.to_s == "User"
+      klass_name = self.parse_klass_name ? self.parse_klass_name : self.class.model_name.to_s
+      if klass_name == "User"
         "users"
-      elsif self.model_name.to_s == "Installation"
+      elsif klass_name == "Installation"
         "installations"
-      elsif self.model_name.to_s == "Role"
+      elsif klass_name == "Role"
         "roles"
       else
-        "classes/#{self.model_name.to_s}"
+        "classes/#{klass_name}"
       end
     end
 
