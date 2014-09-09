@@ -34,8 +34,6 @@ module ParseResource
     HashWithIndifferentAccess = ActiveSupport::HashWithIndifferentAccess
 
     attr_accessor :error_instances
-    #EDIT: Allowing for explicit Parse Class Name
-    cattr_accessor :parse_klass_name
 
     define_model_callbacks :save, :create, :update, :destroy
 
@@ -59,13 +57,6 @@ module ParseResource
       self.attributes unless self.attributes.empty?
       create_setters_and_getters!
       
-      #EDIT: Allowing for explicit Parse Class Name
-      self.parse_klass_name = nil
-    end
-    
-    # Allow different Parse Class Name for Model namespacing issues
-    def self.parse_klass(klass)
-      self.parse_klass_name = klass
     end
 
     # Explicitly adds a field to the model.
@@ -113,12 +104,16 @@ module ParseResource
       @@has_many_relations << parent
     end
     
-    #EDIT: Allowing for explicit Parse Class Name
+    def self.namespace
+      settings['namespace']
+    end
+
     def to_pointer
-      klass_name = self.parse_klass_name ? self.parse_klass_name : self.class.model_name.to_s
+      klass_name = self.class.model_name.to_s
       klass_name = "_User" if klass_name == "User"
       klass_name = "_Installation" if klass_name == "Installation"
       klass_name = "_Role" if klass_name == "Role"
+      klass_name = self.namespace ? self.namespace+'::'+klass_name : klass_name
       {"__type" => "Pointer", "className" => klass_name.to_s, "objectId" => self.id}
     end
 
@@ -195,9 +190,8 @@ module ParseResource
     end
 
     # Gets the current class's model name for the URI
-    # EDIT: Allowing for explicit Parse Class Name
     def self.model_name_uri
-      klass_name = self.parse_klass_name ? self.parse_klass_name : self.model_name.to_s
+      klass_name = self.namespace ? self.model_name.to_s.sub(self.namespace+'::', '') : self.model_name.to_s
       if klass_name == "User"
         "users"
       elsif klass_name == "Installation"
@@ -308,6 +302,7 @@ module ParseResource
           settings = HashWithIndifferentAccess.new
           settings['app_id'] = ENV["PARSE_RESOURCE_APPLICATION_ID"]
           settings['master_key'] = ENV["PARSE_RESOURCE_MASTER_KEY"]
+          settings['namespace'] = ENV["PARSE_RESOURCE_NAMESPACE"]
           settings
         else
           raise "Cannot load parse_resource.yml and API keys are not set in environment"

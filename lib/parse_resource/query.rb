@@ -224,7 +224,11 @@ class Query
 
   def turn_relation_hash_into_object(hash)
     return nil if hash == nil or hash["className"] == "_User"
-    relation_object = hash["className"].to_s.constantize.new if hash["className"] != "_User"
+    
+    klass_name = @klass.namespace ? @klass.namespace+'::'+ hash["className"].to_s : hash["className"].to_s
+    
+    relation_object = klass_name.constantize.new
+    
     hash.each do |key, value|
       class_name_in_a_hash = false
       if value.is_a?(Array)
