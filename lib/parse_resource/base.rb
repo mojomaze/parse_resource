@@ -107,13 +107,16 @@ module ParseResource
     def self.namespace
       settings['namespace']
     end
+    
+    def namespace
+      ParseResource::Base.namespace
+    end
 
     def to_pointer
-      klass_name = self.class.model_name.to_s
+      klass_name = namespace ? self.class.model_name.to_s.sub(namespace+'::', '') : self.class.model_name.to_s
       klass_name = "_User" if klass_name == "User"
       klass_name = "_Installation" if klass_name == "Installation"
       klass_name = "_Role" if klass_name == "Role"
-      klass_name = self.namespace ? self.namespace+'::'+klass_name : klass_name
       {"__type" => "Pointer", "className" => klass_name.to_s, "objectId" => self.id}
     end
 
